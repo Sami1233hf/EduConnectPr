@@ -1,0 +1,12 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const db = require('./db');
+const auth = require('./routes/auth');
+const api = require('./routes/api');
+const app = express();
+app.use(cors()); app.use(bodyParser.json());
+app.use('/api/auth', auth);
+app.use('/api', api);
+const PORT = process.env.PORT || 5100;
+app.listen(PORT, ()=> console.log('EduConnectPro server running on', PORT));

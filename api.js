@@ -1,0 +1,5 @@
+const express=require('express'); const router=express.Router(); const db=require('../db'); const { auth } = require('../middleware');
+router.get('/courses', (req,res)=> db.all('SELECT * FROM courses ORDER BY created_at DESC',[],(e,r)=> e?res.status(500).json({error:e.message}):res.json(r)));
+router.post('/courses', auth, (req,res)=>{ const {title,description,instructor}=req.body; if(!title) return res.status(400).json({error:'Title required'}); const stmt=db.prepare('INSERT INTO courses(user_id,title,description,instructor) VALUES(?,?,?,?)'); stmt.run([req.user.id,title,description||'', instructor||''], function(err){ if(err) return res.status(500).json({error:err.message}); db.get('SELECT * FROM courses WHERE id=?',[this.lastID], (e,row)=> res.status(201).json(row)); }); });
+router.delete('/courses/:id', auth, (req,res)=>{ const id=req.params.id; db.run('DELETE FROM courses WHERE id=? AND user_id=?',[id, req.user.id], function(err){ if(err) return res.status(500).json({error:err.message}); res.json({deleted:this.changes}); }); });
+module.exports=router;

@@ -1,0 +1,5 @@
+const express=require('express'); const router=express.Router(); const db=require('../db'); const bcrypt=require('bcrypt'); const jwt=require('jsonwebtoken');
+const SECRET = process.env.JWT_SECRET || 'default_secret';
+router.post('/register', async (req,res)=>{ const {username,password}=req.body; if(!username||!password) return res.status(400).json({error:'Missing'}); const hash=await bcrypt.hash(password,10); db.run('INSERT INTO users(username,password) VALUES(?,?)',[username,hash], function(err){ if(err) return res.status(400).json({error:'User exists'}); const token=jwt.sign({id:this.lastID,username}, SECRET, {expiresIn:'7d'}); res.json({token}); }); });
+router.post('/login', (req,res)=>{ const {username,password}=req.body; db.get('SELECT * FROM users WHERE username=?',[username], async (err,row)=>{ if(err) return res.status(500).json({error:err.message}); if(!row) return res.status(400).json({error:'No user'}); const ok=await bcrypt.compare(password,row.password); if(!ok) return res.status(401).json({error:'Invalid'}); const token=jwt.sign({id:row.id,username:row.username}, SECRET, {expiresIn:'7d'}); res.json({token}); }); });
+module.exports=router;
